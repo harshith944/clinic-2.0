@@ -7,6 +7,16 @@ import type {
 } from '../types/clinic';
 
 export const DOCTOR_EMAIL = 'infinitysoftwaresolutions0@gmail.com';
+export const CLINIC_WHATSAPP_NUMBER = '15125550199';
+export const CLINIC_WHATSAPP_DISPLAY = '+1 (512) 555-0199';
+
+export const DOUBT_TOPICS: string[] = [
+  'Vaccination Timing',
+  'Symptoms & Triage',
+  'Medication & Dosage',
+  'Visit Preparation',
+  'Diet & Recovery',
+];
 
 export const PRIMARY_DOCTOR: Veterinarian = {
   id: 'dr-elena',
@@ -15,7 +25,7 @@ export const PRIMARY_DOCTOR: Veterinarian = {
   specialty: 'Small Animal Medicine & Fear-Free Care',
   experienceYears: 9,
   rating: 4.9,
-  clinicName: 'CityVet Main Pavilion',
+  clinicName: 'Ajith Clinic',
   clinicAddress: '1011 W 5th St, Suite 120, Austin, TX',
   clinicHours: 'Mon–Sat · 08:30 AM – 06:30 PM',
   avatarUrl: '/src/assets/images/vet_doctor_elena_1795280651805.jpg',
@@ -58,11 +68,11 @@ export const APPOINTMENT_TYPES: AppointmentTypeOption[] = [
   },
   {
     id: 'chat',
-    label: 'Live Chat',
-    shortLabel: 'Chat',
+    label: 'WhatsApp & Chat',
+    shortLabel: 'WhatsApp',
     fee: 25,
     durationMinutes: 24,
-    description: 'Photo sharing and rapid clinical advice directly from Dr. Elena Vance.',
+    description: 'WhatsApp & direct clinical chat with Dr. Elena Vance to verify pet care doubts.',
     recommendedZone: 'recovery',
   },
   {
@@ -98,7 +108,7 @@ export const CLINIC_ZONES: ClinicZoneInfo[] = [
   {
     id: 'overview',
     label: 'Overview',
-    title: 'CityVet Architectural Pavilion',
+    title: 'Ajith Clinic Architectural Pavilion',
     summary:
       'Sunlit single-doctor veterinary pavilion designed to keep pets calm with acoustic timber slats, natural glass daylighting, and direct suite access.',
     equipment: ['Step-Free Pet Entry', 'Acoustic Timber Canopy', 'Separated Cat & Dog Flow'],

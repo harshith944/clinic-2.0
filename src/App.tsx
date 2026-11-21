@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { ArrowRight, CalendarCheck2, ShieldCheck, Stethoscope, User } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarCheck2,
+  MessageCircle,
+  ShieldCheck,
+  Stethoscope,
+  User,
+} from 'lucide-react';
 import { AppointmentTypesBar } from './components/AppointmentTypesBar';
 import { AppointmentsSection } from './components/AppointmentsSection';
 import { AuthModal } from './components/AuthModal';
@@ -9,17 +16,22 @@ import { ClinicViewport3D } from './components/ClinicViewport3D';
 import { DoctorsSection } from './components/DoctorsSection';
 import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
+import { PatientDoubtsSection } from './components/PatientDoubtsSection';
 import { SessionModal } from './components/SessionModal';
+import { WhatsAppQuickChat } from './components/WhatsAppQuickChat';
 import { DOCTOR_EMAIL, PRIMARY_DOCTOR } from './data/clinicData';
 import { auth, googleProvider, testFirestoreConnection } from './lib/firebase';
 import {
   cancelAppointmentInFirestore,
   createAppointmentInFirestore,
+  createPatientDoubtInFirestore,
   doctorUpdateAppointmentInFirestore,
   resolveEffectiveRole,
   subscribeAppointments,
   subscribeBookedSlots,
+  subscribePatientDoubts,
   syncUserProfile,
+  verifyPatientDoubtInFirestore,
 } from './services/clinicService';
 import type {
   Appointment,
@@ -29,6 +41,8 @@ import type {
   BookingFormInput,
   ClinicUserProfile,
   ClinicZoneId,
+  PatientDoubt,
+  PatientDoubtInput,
   UserRole,
 } from './types/clinic';
 
@@ -39,6 +53,7 @@ export default function App() {
   const [user, setUser] = useState<ClinicUserProfile | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
+  const [doubts, setDoubts] = useState<PatientDoubt[]>([]);
   const [activeSession, setActiveSession] = useState<Appointment | null>(null);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -46,16 +61,19 @@ export default function App() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
+  const [isSubmittingDoubt, setIsSubmittingDoubt] = useState(false);
   const [isSavingSession, setIsSavingSession] = useState(false);
 
   const bookingRef = useRef<HTMLElement | null>(null);
   const appointmentsRef = useRef<HTMLDivElement | null>(null);
+  const doubtsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     void testFirestoreConnection();
 
     let unsubscribeAppointments: (() => void) | null = null;
     let unsubscribeBookedSlots: (() => void) | null = null;
+    let unsubscribeDoubts: (() => void) | null = null;
     let active = true;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -67,12 +85,17 @@ export default function App() {
         unsubscribeBookedSlots();
         unsubscribeBookedSlots = null;
       }
+      if (unsubscribeDoubts) {
+        unsubscribeDoubts();
+        unsubscribeDoubts = null;
+      }
 
       if (!firebaseUser) {
         if (active) {
           setUser(null);
           setAppointments([]);
           setBookedSlots([]);
+          setDoubts([]);
         }
         return;
       }
@@ -100,6 +123,10 @@ export default function App() {
       unsubscribeBookedSlots = subscribeBookedSlots((slots) => {
         if (active) setBookedSlots(slots);
       });
+
+      unsubscribeDoubts = subscribePatientDoubts(profile, (items) => {
+        if (active) setDoubts(items);
+      });
     });
 
     return () => {
@@ -107,6 +134,7 @@ export default function App() {
       unsubscribeAuth();
       if (unsubscribeAppointments) unsubscribeAppointments();
       if (unsubscribeBookedSlots) unsubscribeBookedSlots();
+      if (unsubscribeDoubts) unsubscribeDoubts();
     };
   }, []);
 
@@ -116,6 +144,10 @@ export default function App() {
 
   const scrollToAppointments = () => {
     appointmentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const scrollToDoubts = () => {
+    doubtsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const openAuthModal = (role: UserRole = 'patient') => {
@@ -179,6 +211,25 @@ export default function App() {
     }
   };
 
+  const handleCreateDoubt = async (
+    input: PatientDoubtInput,
+  ): Promise<PatientDoubt> => {
+    if (!user) {
+      openAuthModal('patient');
+      throw new Error('Authentication required');
+    }
+    setIsSubmittingDoubt(true);
+    try {
+      return await createPatientDoubtInFirestore(user.uid, input, doubts.length);
+    } finally {
+      setIsSubmittingDoubt(false);
+    }
+  };
+
+  const handleVerifyDoubt = async (doubtId: string, doctorReply: string) => {
+    await verifyPatientDoubtInFirestore(doubtId, doctorReply);
+  };
+
   const handleCancelAppointment = async (appointment: Appointment) => {
     await cancelAppointmentInFirestore(appointment);
   };
@@ -222,7 +273,7 @@ export default function App() {
                 Tour Our 3D Veterinary Pavilion &amp; Book Directly with {PRIMARY_DOCTOR.name}
               </h1>
               <p className="mt-3 text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
-                Inspect our reception lounge, surgical exam suite, imaging bay, and comfort recovery area in real-time 3D. Sign in as a Pet Owner or Doctor to confirm and manage visits.
+                Inspect our reception lounge, surgical exam suite, imaging bay, and comfort recovery area in real-time 3D. Sign in as a Pet Owner or Doctor to book visits or verify patient doubts on WhatsApp.
               </p>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -254,6 +305,14 @@ export default function App() {
                     Patient &amp; Doctor Login
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={scrollToDoubts}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-700" aria-hidden="true" />
+                  WhatsApp &amp; Verify Doubts
+                </button>
               </div>
             </div>
 
@@ -278,7 +337,7 @@ export default function App() {
                   Flexible Care
                 </span>
                 <span className="text-[11px] text-slate-500 block">
-                  Clinic to Home
+                  Clinic to WhatsApp
                 </span>
               </div>
               <div className="pl-3 sm:pl-4">
@@ -377,11 +436,25 @@ export default function App() {
           />
         </div>
 
+        {/* WhatsApp Chat & Doctor Doubt Verification */}
+        <div ref={doubtsRef}>
+          <PatientDoubtsSection
+            user={user}
+            doubts={doubts}
+            isSubmitting={isSubmittingDoubt}
+            onCreateDoubt={handleCreateDoubt}
+            onVerifyDoubt={handleVerifyDoubt}
+            onOpenAuth={openAuthModal}
+          />
+        </div>
+
         {/* Dedicated Veterinarian Spotlight */}
         <DoctorsSection onBookWithDoctor={scrollToBooking} />
       </main>
 
       <Footer />
+
+      <WhatsAppQuickChat onJumpToDoubts={scrollToDoubts} />
 
       <AuthModal
         isOpen={authModalOpen}

@@ -12,7 +12,7 @@ import {
   writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
-import { DOCTOR_EMAIL } from '../data/clinicData';
+import { DOCTOR_EMAIL, PRIMARY_DOCTOR } from '../data/clinicData';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import type {
   Appointment,
@@ -20,6 +20,8 @@ import type {
   BookedSlot,
   BookingFormInput,
   ClinicUserProfile,
+  PatientDoubt,
+  PatientDoubtInput,
   UserRole,
 } from '../types/clinic';
 import {
@@ -28,6 +30,7 @@ import {
   createAppointmentRecord,
   generateAppointmentId,
 } from '../utils/appointments';
+import { DOUBT_LIMITS, generateDoubtId } from '../utils/whatsapp';
 
 export function resolveEffectiveRole(email: string | null | undefined): UserRole {
   if (email && email.toLowerCase() === DOCTOR_EMAIL.toLowerCase()) {
@@ -295,5 +298,100 @@ export async function doctorUpdateAppointmentInFirestore(
       OperationType.UPDATE,
       `appointments/${appointment.id}`,
     );
+  }
+}
+
+export function subscribePatientDoubts(
+  profile: ClinicUserProfile,
+  onData: (doubts: PatientDoubt[]) => void,
+): Unsubscribe {
+  const colRef = collection(db, 'patientDoubts');
+  const q =
+    profile.role === 'doctor'
+      ? colRef
+      : query(colRef, where('patientUid', '==', profile.uid));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const items: PatientDoubt[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const createdIso =
+          data.createdAt && typeof data.createdAt.toDate === 'function'
+            ? data.createdAt.toDate().toISOString()
+            : '';
+        items.push({
+          id: String(data.id ?? docSnap.id),
+          patientUid: String(data.patientUid ?? ''),
+          patientName: String(data.patientName ?? ''),
+          whatsappPhone: String(data.whatsappPhone ?? ''),
+          petName: String(data.petName ?? ''),
+          topic: String(data.topic ?? 'General Care'),
+          question: String(data.question ?? ''),
+          status: data.status === 'verified' ? 'verified' : 'pending',
+          doctorReply: data.doctorReply ? String(data.doctorReply) : undefined,
+          verifiedBy: data.verifiedBy ? String(data.verifiedBy) : undefined,
+          createdAt: createdIso,
+        });
+      });
+
+      items.sort((a, b) => ((a.createdAt ?? '') < (b.createdAt ?? '') ? 1 : -1));
+      onData(items);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'patientDoubts');
+    },
+  );
+}
+
+export async function createPatientDoubtInFirestore(
+  patientUid: string,
+  input: PatientDoubtInput,
+  existingCount = 0,
+): Promise<PatientDoubt> {
+  const doubtId = generateDoubtId(existingCount);
+  const ref = doc(db, 'patientDoubts', doubtId);
+
+  const sanitized: PatientDoubt = {
+    id: doubtId,
+    patientUid,
+    patientName: input.patientName.trim().slice(0, DOUBT_LIMITS.patientNameMax),
+    whatsappPhone: input.whatsappPhone.trim().slice(0, DOUBT_LIMITS.whatsappPhoneMax),
+    petName: input.petName.trim().slice(0, DOUBT_LIMITS.petNameMax),
+    topic: input.topic.trim().slice(0, DOUBT_LIMITS.topicMax),
+    question: input.question.trim().slice(0, DOUBT_LIMITS.questionMax),
+    status: 'pending',
+  };
+
+  try {
+    await setDoc(ref, {
+      ...sanitized,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, `patientDoubts/${doubtId}`);
+  }
+
+  return sanitized;
+}
+
+export async function verifyPatientDoubtInFirestore(
+  doubtId: string,
+  doctorReply: string,
+): Promise<void> {
+  const ref = doc(db, 'patientDoubts', doubtId);
+  const sanitizedReply = doctorReply.trim().slice(0, DOUBT_LIMITS.doctorReplyMax);
+
+  try {
+    await updateDoc(ref, {
+      status: 'verified',
+      doctorReply: sanitizedReply,
+      verifiedBy: PRIMARY_DOCTOR.name.slice(0, DOUBT_LIMITS.verifiedByMax),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `patientDoubts/${doubtId}`);
   }
 }

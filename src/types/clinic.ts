@@ -8,6 +8,8 @@ export type LightingPreset = 'daylight' | 'evening';
 
 export type UserRole = 'patient' | 'doctor';
 
+export type DoubtStatus = 'pending' | 'verified';
+
 export interface ClinicUserProfile {
   uid: string;
   displayName: string;
@@ -83,6 +85,36 @@ export interface BookedSlot {
   appointmentId: string;
   bookedByUid: string;
   status: 'reserved' | 'released';
+}
+
+export interface PatientDoubt {
+  id: string;
+  patientUid: string;
+  patientName: string;
+  whatsappPhone: string;
+  petName: string;
+  topic: string;
+  question: string;
+  status: DoubtStatus;
+  doctorReply?: string;
+  verifiedBy?: string;
+  createdAt?: string;
+}
+
+export interface PatientDoubtInput {
+  patientName: string;
+  whatsappPhone: string;
+  petName: string;
+  topic: string;
+  question: string;
+}
+
+export interface PatientDoubtValidationErrors {
+  patientName?: string;
+  whatsappPhone?: string;
+  petName?: string;
+  topic?: string;
+  question?: string;
 }
 
 export interface WeeklyMetric {

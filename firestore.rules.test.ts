@@ -14,6 +14,7 @@ test('firestore.rules enforces email_verified == true and valid ID guards', () =
   assert.match(rulesText, /function isValidId\(id\)/);
   assert.match(rulesText, /isValidId\(appointmentId\)/);
   assert.match(rulesText, /isValidId\(userId\)/);
+  assert.match(rulesText, /isValidId\(doubtId\)/);
 });
 
 test('firestore.rules enforces single-doctor dr-elena and prevents self-assigned doctor role', () => {
@@ -26,4 +27,11 @@ test('firestore.rules enforces split PII isolation and server timestamps', () =>
   assert.match(rulesText, /incoming\(\)\.createdAt == request\.time/);
   assert.match(rulesText, /incoming\(\)\.updatedAt == request\.time/);
   assert.match(rulesText, /affectedKeys\(\)\.hasOnly\(/);
+});
+
+test('firestore.rules restricts patient doubt verification strictly to isDoctor()', () => {
+  assert.match(rulesText, /match \/patientDoubts\/\{doubtId\}/);
+  assert.match(rulesText, /function isValidPatientDoubt\(data, doubtId\)/);
+  assert.match(rulesText, /incoming\(\)\.status == 'pending'/);
+  assert.match(rulesText, /isDoctor\(\) &&[\s\S]*incoming\(\)\.status == 'verified'/);
 });

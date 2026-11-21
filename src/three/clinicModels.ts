@@ -6,6 +6,7 @@ import {
   createLimestoneTileTexture,
   createMonitorScreenTexture,
   createOakWoodTexture,
+  createWallArtTexture,
 } from './textures';
 
 export interface ClinicSceneAssets {
@@ -57,14 +58,18 @@ export function buildClinicSceneModels(
   const vitalsTex = trackTex(createMonitorScreenTexture('vitals'));
   const scheduleTex = trackTex(createMonitorScreenTexture('schedule'));
   const ultrasoundTex = trackTex(createMonitorScreenTexture('ultrasound'));
-  const signTex = trackTex(createClinicSignTexture());
+  const signTex = trackTex(createClinicSignTexture(maxAnisotropy));
+  const wallArtTex = trackTex(createWallArtTexture(maxAnisotropy));
 
-  // Shared PBR Materials (roughness varied >= 0.25 across adjacent elements)
+  // Shared PBR Materials with rich, harmonious architectural clinic colors
   const lawnMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: 0xdfe9df, roughness: 0.92, metalness: 0.0 }),
+    new THREE.MeshStandardMaterial({ color: 0xcbe2ce, roughness: 0.92, metalness: 0.0 }),
+  );
+  const sandstoneMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xebd9c3, roughness: 0.78, metalness: 0.02 }),
   );
   const plinthMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.72, metalness: 0.05 }),
+    new THREE.MeshStandardMaterial({ color: 0xdbe4f0, roughness: 0.72, metalness: 0.05 }),
   );
   const floorMat = trackMat(
     new THREE.MeshStandardMaterial({
@@ -76,6 +81,12 @@ export function buildClinicSceneModels(
   );
   const wallMat = trackMat(
     new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.78, metalness: 0.02 }),
+  );
+  const mintWallMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xccfbf1, roughness: 0.76, metalness: 0.02 }),
+  );
+  const apricotWallMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xffedd5, roughness: 0.76, metalness: 0.02 }),
   );
   const oakMat = trackMat(
     new THREE.MeshStandardMaterial({
@@ -94,11 +105,29 @@ export function buildClinicSceneModels(
   const cobaltMat = trackMat(
     new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.38, metalness: 0.12 }),
   );
+  const tealMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0x0d9488, roughness: 0.42, metalness: 0.08 }),
+  );
+  const coralMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.48, metalness: 0.05 }),
+  );
   const amberMat = trackMat(
     new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.45, metalness: 0.08 }),
   );
   const emeraldMat = trackMat(
     new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.55, metalness: 0.05 }),
+  );
+  const skyRugMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xdbeafe, roughness: 0.86, metalness: 0.0 }),
+  );
+  const sandRugMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.86, metalness: 0.0 }),
+  );
+  const mintRugMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xd1fae5, roughness: 0.86, metalness: 0.0 }),
+  );
+  const coralRugMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xffe4e6, roughness: 0.86, metalness: 0.0 }),
   );
   const glassMat = trackMat(
     new THREE.MeshPhysicalMaterial({
@@ -117,7 +146,10 @@ export function buildClinicSceneModels(
     new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.05 }),
   );
   const foliageMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: 0x4d8b65, roughness: 0.82, metalness: 0.0 }),
+    new THREE.MeshStandardMaterial({ color: 0x3b8758, roughness: 0.82, metalness: 0.0 }),
+  );
+  const terracottaPotMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0xd97745, roughness: 0.78, metalness: 0.02 }),
   );
   const contactShadowMat = trackMat(
     new THREE.MeshBasicMaterial({
@@ -135,23 +167,35 @@ export function buildClinicSceneModels(
     root.add(disc);
   };
 
-  // 1. Exterior Architectural Campus Ground + Pavilion Plinth
+  // 1. Exterior Architectural Campus Ground + Sandstone Walkway + Pavilion Plinth
   const ground = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(36, 48)), lawnMat);
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.04;
   ground.receiveShadow = true;
   root.add(ground);
 
-  const walkway = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(3.4, 0.06, 8.5)), plinthMat);
+  const walkway = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(3.5, 0.06, 8.5)), sandstoneMat);
   walkway.position.set(0, -0.01, 9.2);
   walkway.receiveShadow = true;
   root.add(walkway);
+
+  // Colored garden border strips along walkway
+  [-1.9, 1.9].forEach((bx) => {
+    const curb = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.18, 0.09, 8.2)), tealMat);
+    curb.position.set(bx, 0.0, 9.2);
+    root.add(curb);
+  });
 
   // Raised Clinic Platform (13m x 10m)
   const plinth = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(13.6, 0.26, 10.6)), plinthMat);
   plinth.position.set(0, 0.11, 0);
   plinth.receiveShadow = true;
   root.add(plinth);
+
+  // Subtle cobalt plinth edge trim
+  const plinthTrim = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(13.66, 0.06, 10.66)), tealMat);
+  plinthTrim.position.set(0, 0.03, 0);
+  root.add(plinthTrim);
 
   // Interior Tiled Floor (offset +0.02 above plinth to prevent z-fighting)
   const floor = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(13.0, 0.04, 10.0)), floorMat);
@@ -161,7 +205,31 @@ export function buildClinicSceneModels(
 
   const floorY = 0.28;
 
-  // Back & Left Interior Architectural Walls + Oak Wainscoting
+  // Zone Accent Rugs / Colored Floor Inlays (offset +0.012 above floorY to avoid z-fighting)
+  const addZoneMat = (
+    x: number,
+    z: number,
+    w: number,
+    d: number,
+    mat: THREE.Material,
+    borderMat: THREE.Material,
+  ) => {
+    const border = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(w + 0.16, 0.014, d + 0.16)), borderMat);
+    border.position.set(x, floorY + 0.008, z);
+    root.add(border);
+
+    const rug = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(w, 0.018, d)), mat);
+    rug.position.set(x, floorY + 0.01, z);
+    rug.receiveShadow = true;
+    root.add(rug);
+  };
+
+  addZoneMat(-3.4, 2.3, 4.4, 3.6, sandRugMat, amberMat); // Reception warm sand & amber
+  addZoneMat(3.0, 0.3, 4.2, 3.4, skyRugMat, cobaltMat); // Exam Suite sky blue & cobalt
+  addZoneMat(3.2, -3.2, 4.3, 2.9, mintRugMat, tealMat); // Diagnostics mint & teal
+  addZoneMat(-3.4, -2.5, 4.3, 3.3, coralRugMat, coralMat); // Recovery rose-coral & terracotta
+
+  // Back & Left Interior Architectural Walls + Oak Wainscoting + Colored Feature Panels
   const backWall = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(13.2, 3.6, 0.24)), wallMat);
   backWall.position.set(0, floorY + 1.8, -5.0);
   backWall.castShadow = true;
@@ -172,15 +240,36 @@ export function buildClinicSceneModels(
   backWainscot.position.set(0, floorY + 0.58, -4.85);
   root.add(backWainscot);
 
+  // Colored feature wall panels above wainscoting
+  const leftBackPanel = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(6.1, 2.1, 0.04)), apricotWallMat);
+  leftBackPanel.position.set(-3.2, floorY + 2.3, -4.86);
+  root.add(leftBackPanel);
+
+  const rightBackPanel = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(6.1, 2.1, 0.04)), mintWallMat);
+  rightBackPanel.position.set(3.2, floorY + 2.3, -4.86);
+  root.add(rightBackPanel);
+
   const leftWall = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.24, 3.6, 10.0)), wallMat);
   leftWall.position.set(-6.5, floorY + 1.8, 0);
   leftWall.castShadow = true;
   leftWall.receiveShadow = true;
   root.add(leftWall);
 
+  // Framed colorful Paw Care artwork on left wall
+  const artFrame = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.06, 1.45, 1.45)), mullionMat);
+  artFrame.position.set(-6.35, floorY + 2.15, -0.2);
+  root.add(artFrame);
+  const artCanvas = new THREE.Mesh(
+    trackGeo(new THREE.PlaneGeometry(1.3, 1.3)),
+    trackMat(new THREE.MeshBasicMaterial({ map: wallArtTex })),
+  );
+  artCanvas.rotation.y = Math.PI / 2;
+  artCanvas.position.set(-6.31, floorY + 2.15, -0.2);
+  root.add(artCanvas);
+
   // Interior room divider (separating Exam/Diagnostics on right from Reception/Recovery on left)
   const dividerGroup = new THREE.Group();
-  const dividerLower = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.16, 1.1, 4.4)), wallMat);
+  const dividerLower = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.16, 1.1, 4.4)), tealMat);
   dividerLower.position.set(0.2, floorY + 0.55, -2.4);
   dividerGroup.add(dividerLower);
 
@@ -194,7 +283,7 @@ export function buildClinicSceneModels(
   dividerGroup.add(dividerTop);
   root.add(dividerGroup);
 
-  // Front Glass Curtain Wall with Framed Double Entry Doors (never freestanding doors)
+  // Front Glass Curtain Wall with Framed Entry Portal
   const frontCurtainGroup = new THREE.Group();
   const leftPane = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(4.6, 3.1, 0.06)), glassMat);
   leftPane.position.set(-4.1, floorY + 1.55, 4.95);
@@ -206,24 +295,31 @@ export function buildClinicSceneModels(
   rightPane.renderOrder = 2;
   frontCurtainGroup.add(rightPane);
 
-  // Mullion columns + doorway jambs
-  [-6.4, -1.75, 1.75, 6.4].forEach((xPos) => {
+  // Mullion columns + teal-accented entrance portal jambs
+  [-6.4, 6.4].forEach((xPos) => {
     const col = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.12, 3.35, 0.14)), mullionMat);
     col.position.set(xPos, floorY + 1.67, 4.95);
     col.castShadow = true;
     frontCurtainGroup.add(col);
   });
 
-  // Top fascia beam + CityVet Signboard
+  [-1.75, 1.75].forEach((xPos) => {
+    const portalCol = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.16, 3.35, 0.18)), tealMat);
+    portalCol.position.set(xPos, floorY + 1.67, 4.95);
+    portalCol.castShadow = true;
+    frontCurtainGroup.add(portalCol);
+  });
+
+  // Top fascia beam + Ajith Clinic Signboard
   const fascia = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(13.4, 0.24, 0.28)), mullionMat);
   fascia.position.set(0, floorY + 3.45, 4.95);
   frontCurtainGroup.add(fascia);
 
   const signBoard = new THREE.Mesh(
-    trackGeo(new THREE.BoxGeometry(3.8, 0.85, 0.14)),
+    trackGeo(new THREE.BoxGeometry(4.2, 0.92, 0.16)),
     trackMat(new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.35, metalness: 0.1 })),
   );
-  signBoard.position.set(0, floorY + 4.05, 5.05);
+  signBoard.position.set(0, floorY + 4.08, 5.05);
   frontCurtainGroup.add(signBoard);
 
   // Partially open architectural timber roof louvers (keeps interior 100% visible from top-3/4 view)
@@ -235,12 +331,12 @@ export function buildClinicSceneModels(
   }
   root.add(frontCurtainGroup);
 
-  // Exterior Potted Planters flanking entrance
+  // Exterior Terracotta Potted Planters with Blossoms flanking entrance
   [-2.6, 2.6].forEach((px) => {
     const planter = new THREE.Group();
     const pot = new THREE.Mesh(
       trackGeo(new THREE.CylinderGeometry(0.46, 0.36, 0.56, 16)),
-      plinthMat,
+      terracottaPotMat,
     );
     pot.position.y = 0.28;
     planter.add(pot);
@@ -250,6 +346,19 @@ export function buildClinicSceneModels(
     const shrub2 = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.32, 14, 10)), emeraldMat);
     shrub2.position.set(0.22, 0.62, 0.12);
     planter.add(shrub2);
+    // Warm coral & amber flower accents
+    [
+      [-0.16, 0.96, 0.18, coralMat],
+      [0.14, 0.92, -0.14, amberMat],
+      [0.28, 0.78, 0.16, coralMat],
+    ].forEach(([fx, fy, fz, fMat]) => {
+      const bloom = new THREE.Mesh(
+        trackGeo(new THREE.SphereGeometry(0.08, 10, 8)),
+        fMat as THREE.Material,
+      );
+      bloom.position.set(fx as number, fy as number, fz as number);
+      planter.add(bloom);
+    });
     planter.position.set(px, 0.24, 5.7);
     root.add(planter);
   });
@@ -269,8 +378,8 @@ export function buildClinicSceneModels(
   deskTop.position.set(0, 0.99, 0);
   receptionGroup.add(deskTop);
 
-  const deskAccentBand = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(2.92, 0.14, 0.06)), cobaltMat);
-  deskAccentBand.position.set(0, 0.18, 0.43);
+  const deskAccentBand = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(2.92, 0.16, 0.06)), coralMat);
+  deskAccentBand.position.set(0, 0.2, 0.43);
   receptionGroup.add(deskAccentBand);
 
   // Check-in monitor
@@ -284,9 +393,7 @@ export function buildClinicSceneModels(
 
   const monScreen = new THREE.Mesh(
     trackGeo(new THREE.PlaneGeometry(0.68, 0.4)),
-    trackMat(
-      new THREE.MeshBasicMaterial({ map: scheduleTex }),
-    ),
+    trackMat(new THREE.MeshBasicMaterial({ map: scheduleTex })),
   );
   monScreen.position.set(-0.4, 1.38, -0.02);
   receptionGroup.add(monScreen);
@@ -296,16 +403,16 @@ export function buildClinicSceneModels(
   scalePad.position.set(2.2, 0.03, 0.3);
   receptionGroup.add(scalePad);
 
-  const scaleMatTop = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.96, 0.02, 0.68)), cobaltMat);
+  const scaleMatTop = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.96, 0.02, 0.68)), tealMat);
   scaleMatTop.position.set(2.2, 0.07, 0.3);
   receptionGroup.add(scaleMatTop);
 
-  // Waiting Bench
+  // Waiting Bench with cheerful teal cushion
   const benchSeat = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(2.1, 0.14, 0.72)), oakMat);
   benchSeat.position.set(-1.3, 0.42, 1.9);
   receptionGroup.add(benchSeat);
 
-  const benchCushion = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(1.96, 0.1, 0.64)), cobaltMat);
+  const benchCushion = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(1.96, 0.1, 0.64)), tealMat);
   benchCushion.position.set(-1.3, 0.54, 1.9);
   receptionGroup.add(benchCushion);
 
@@ -315,7 +422,7 @@ export function buildClinicSceneModels(
     receptionGroup.add(leg);
   });
 
-  addShadow(-3.4, floorY + 0.015, 2.2, 1.7);
+  addShadow(-3.4, floorY + 0.025, 2.2, 1.7);
   root.add(receptionGroup);
 
   // ---------------------------------------------------------------------------
@@ -341,7 +448,7 @@ export function buildClinicSceneModels(
   tableTop.castShadow = true;
   examGroup.add(tableTop);
 
-  const examMat = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(1.62, 0.05, 0.86)), cobaltMat);
+  const examMat = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(1.62, 0.05, 0.86)), tealMat);
   examMat.position.set(0, 0.92, 0);
   examGroup.add(examMat);
 
@@ -361,7 +468,7 @@ export function buildClinicSceneModels(
   lampHead.position.set(0.9, -0.15, 0.58);
   const lampOuter = new THREE.Mesh(
     trackGeo(new THREE.CylinderGeometry(0.32, 0.24, 0.12, 20)),
-    quartzMat,
+    cobaltMat,
   );
   lampHead.add(lampOuter);
   const lampGlow = new THREE.Mesh(
@@ -380,7 +487,7 @@ export function buildClinicSceneModels(
   const cartStand = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.04, 0.04, 1.15, 12)), steelMat);
   cartStand.position.y = 0.58;
   cartGroup.add(cartStand);
-  const cartBase = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.28, 0.28, 0.06, 16)), mullionMat);
+  const cartBase = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.28, 0.28, 0.06, 16)), cobaltMat);
   cartBase.position.y = 0.04;
   cartGroup.add(cartBase);
   const vitalsHousing = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.68, 0.46, 0.1)), mullionMat);
@@ -401,7 +508,7 @@ export function buildClinicSceneModels(
   dogGroup.position.set(0, 0.945, 0.04);
   dogGroup.rotation.y = -0.35;
   const furMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: 0xe0a96d, roughness: 0.78, metalness: 0.0 }),
+    new THREE.MeshStandardMaterial({ color: 0xe5a45d, roughness: 0.78, metalness: 0.0 }),
   );
   const noseMat = trackMat(
     new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3, metalness: 0.1 }),
@@ -426,7 +533,6 @@ export function buildClinicSceneModels(
   dogNose.position.set(0, 0.44, 0.31);
   dogGroup.add(dogNose);
 
-  // Ears
   [-0.12, 0.12].forEach((ex) => {
     const ear = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.05, 0.15, 0.08)), amberMat);
     ear.position.set(ex, 0.46, 0.1);
@@ -434,20 +540,17 @@ export function buildClinicSceneModels(
     dogGroup.add(ear);
   });
 
-  // Collar
-  const collar = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.11, 0.022, 8, 18)), cobaltMat);
+  const collar = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.11, 0.024, 8, 18)), coralMat);
   collar.rotation.x = Math.PI / 2;
   collar.position.set(0, 0.35, 0.08);
   dogGroup.add(collar);
 
-  // Front legs
   [-0.08, 0.08].forEach((lx) => {
     const leg = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.038, 0.032, 0.24, 10)), furMat);
     leg.position.set(lx, 0.12, 0.1);
     dogGroup.add(leg);
   });
 
-  // Tail pivot for subtle friendly wag
   const dogTail = new THREE.Group();
   dogTail.position.set(0, 0.12, -0.22);
   const tailMesh = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.025, 0.015, 0.24, 10)), furMat);
@@ -457,7 +560,7 @@ export function buildClinicSceneModels(
   dogGroup.add(dogTail);
 
   examGroup.add(dogGroup);
-  addShadow(3.0, floorY + 0.015, 0.3, 1.35);
+  addShadow(3.0, floorY + 0.025, 0.3, 1.35);
   root.add(examGroup);
 
   // ---------------------------------------------------------------------------
@@ -466,8 +569,8 @@ export function buildClinicSceneModels(
   const diagGroup = new THREE.Group();
   diagGroup.position.set(3.2, floorY, -3.2);
 
-  // Lab Counter & Cabinetry
-  const labCabinet = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(3.4, 0.88, 0.78)), wallMat);
+  // Lab Counter & Colored Mint-Teal Cabinetry
+  const labCabinet = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(3.4, 0.88, 0.78)), tealMat);
   labCabinet.position.set(0.4, 0.44, -1.1);
   labCabinet.castShadow = true;
   diagGroup.add(labCabinet);
@@ -491,6 +594,10 @@ export function buildClinicSceneModels(
   usBody.castShadow = true;
   diagGroup.add(usBody);
 
+  const usTrim = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.77, 0.14, 0.7)), cobaltMat);
+  usTrim.position.set(-0.9, 0.12, 0.2);
+  diagGroup.add(usTrim);
+
   const usDeck = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.78, 0.08, 0.64)), mullionMat);
   usDeck.position.set(-0.9, 0.98, 0.24);
   diagGroup.add(usDeck);
@@ -506,7 +613,7 @@ export function buildClinicSceneModels(
   usScreen.position.set(-0.9, 1.42, 0.115);
   diagGroup.add(usScreen);
 
-  addShadow(3.2, floorY + 0.015, -3.2, 1.6);
+  addShadow(3.2, floorY + 0.025, -3.2, 1.6);
   root.add(diagGroup);
 
   // ---------------------------------------------------------------------------
@@ -523,10 +630,10 @@ export function buildClinicSceneModels(
     recoveryGroup.add(fin);
   }
 
-  // Orthopedic Pet Recovery Bed 1 + Curled Stylized Cat
+  // Orthopedic Pet Recovery Bed 1 (Emerald Teal) + Curled Ginger Cat
   const bedRing1 = new THREE.Mesh(
     trackGeo(new THREE.TorusGeometry(0.62, 0.14, 12, 24)),
-    cobaltMat,
+    emeraldMat,
   );
   bedRing1.rotation.x = Math.PI / 2;
   bedRing1.position.set(-0.7, 0.14, -0.3);
@@ -539,9 +646,8 @@ export function buildClinicSceneModels(
   bedPad1.position.set(-0.7, 0.06, -0.3);
   recoveryGroup.add(bedPad1);
 
-  // Stylized Curled Cat (5 parts)
   const catMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.72, metalness: 0.05 }),
+    new THREE.MeshStandardMaterial({ color: 0xe68a3e, roughness: 0.72, metalness: 0.02 }),
   );
   const catGroup = new THREE.Group();
   catGroup.position.set(-0.7, 0.14, -0.3);
@@ -559,10 +665,10 @@ export function buildClinicSceneModels(
   });
   recoveryGroup.add(catGroup);
 
-  // Orthopedic Pet Bed 2 + Water Station
+  // Orthopedic Pet Bed 2 (Coral Amber) + Water Station
   const bedRing2 = new THREE.Mesh(
     trackGeo(new THREE.TorusGeometry(0.54, 0.12, 12, 24)),
-    amberMat,
+    coralMat,
   );
   bedRing2.rotation.x = Math.PI / 2;
   bedRing2.position.set(1.0, 0.12, 0.15);
@@ -579,45 +685,57 @@ export function buildClinicSceneModels(
   const bowlRack = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.62, 0.1, 0.32)), oakMat);
   bowlRack.position.set(0.15, 0.05, -1.35);
   recoveryGroup.add(bowlRack);
-  [-0.14, 0.14].forEach((bx) => {
-    const bowl = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.11, 0.09, 0.06, 16)), steelMat);
-    bowl.position.set(0.15 + bx, 0.12, -1.35);
+  [
+    [-0.14, coralMat],
+    [0.14, tealMat],
+  ].forEach(([bx, bMat]) => {
+    const bowl = new THREE.Mesh(
+      trackGeo(new THREE.CylinderGeometry(0.11, 0.09, 0.06, 16)),
+      bMat as THREE.Material,
+    );
+    bowl.position.set(0.15 + (bx as number), 0.12, -1.35);
     recoveryGroup.add(bowl);
   });
 
-  addShadow(-3.4, floorY + 0.015, -2.5, 1.65);
+  addShadow(-3.4, floorY + 0.025, -2.5, 1.65);
   root.add(recoveryGroup);
 
   // ---------------------------------------------------------------------------
   // INTERACTIVE ZONE FLOOR RINGS & RAYCAST TARGETS (Layer 1)
   // ---------------------------------------------------------------------------
-  const zoneCenters: Array<{ id: ClinicZoneId; x: number; z: number; radius: number }> = [
-    { id: 'reception', x: -3.4, z: 2.2, radius: 1.55 },
-    { id: 'exam', x: 3.0, z: 0.3, radius: 1.65 },
-    { id: 'diagnostics', x: 3.2, z: -3.2, radius: 1.55 },
-    { id: 'recovery', x: -3.4, z: -2.5, radius: 1.55 },
+  const zoneCenters: Array<{
+    id: ClinicZoneId;
+    x: number;
+    z: number;
+    radius: number;
+    pinMat: THREE.Material;
+  }> = [
+    { id: 'reception', x: -3.4, z: 2.2, radius: 1.55, pinMat: amberMat },
+    { id: 'exam', x: 3.0, z: 0.3, radius: 1.65, pinMat: cobaltMat },
+    { id: 'diagnostics', x: 3.2, z: -3.2, radius: 1.55, pinMat: tealMat },
+    { id: 'recovery', x: -3.4, z: -2.5, radius: 1.55, pinMat: coralMat },
   ];
 
-  zoneCenters.forEach(({ id, x, z, radius }) => {
+  zoneCenters.forEach(({ id, x, z, radius, pinMat }) => {
     const ringMat = trackMat(
       new THREE.MeshBasicMaterial({
         color: 0x2563eb,
         transparent: true,
-        opacity: 0.25,
+        opacity: 0.32,
         side: THREE.DoubleSide,
         depthWrite: false,
       }),
     );
     const ring = new THREE.Mesh(trackGeo(new THREE.RingGeometry(radius - 0.08, radius, 40)), ringMat);
     ring.rotation.x = -Math.PI / 2;
-    ring.position.set(x, floorY + 0.01, z);
+    ring.position.set(x, floorY + 0.024, z);
     zoneRings.set(id, ring);
     root.add(ring);
 
-    // Floating crisp beacon pin
+    // Floating color-coded zone beacon pin
     const pinGroup = new THREE.Group();
     pinGroup.position.set(x, floorY + 2.45, z);
-    const pinHead = new THREE.Mesh(trackGeo(new THREE.OctahedronGeometry(0.18, 0)), cobaltMat);
+    const pinHead = new THREE.Mesh(trackGeo(new THREE.OctahedronGeometry(0.18, 0)), pinMat);
     pinGroup.add(pinHead);
     beaconPins.push(pinGroup);
     root.add(pinGroup);

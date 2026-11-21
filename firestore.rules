@@ -115,6 +115,31 @@ service cloud.firestore {
         data.updatedAt is timestamp;
     }
 
+    function isValidPatientDoubt(data, doubtId) {
+      return data.keys().hasAll([
+          'id', 'patientUid', 'patientName', 'whatsappPhone',
+          'petName', 'topic', 'question', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'patientUid', 'patientName', 'whatsappPhone',
+          'petName', 'topic', 'question', 'status', 'doctorReply', 'verifiedBy',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id == doubtId &&
+        data.id.size() >= 4 && data.id.size() <= 32 && data.id.matches('^Doubt[0-9]{4,8}$') &&
+        data.patientUid is string && data.patientUid.size() >= 1 && data.patientUid.size() <= 128 &&
+        data.patientName is string && data.patientName.size() >= 2 && data.patientName.size() <= 100 &&
+        data.whatsappPhone is string && data.whatsappPhone.size() >= 7 && data.whatsappPhone.size() <= 32 &&
+        data.petName is string && data.petName.size() >= 1 && data.petName.size() <= 60 &&
+        data.topic is string && data.topic.size() >= 2 && data.topic.size() <= 60 &&
+        data.question is string && data.question.size() >= 5 && data.question.size() <= 600 &&
+        data.status in ['pending', 'verified'] &&
+        (!('doctorReply' in data) || (data.doctorReply is string && data.doctorReply.size() <= 800)) &&
+        (!('verifiedBy' in data) || (data.verifiedBy is string && data.verifiedBy.size() >= 2 && data.verifiedBy.size() <= 100)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
     // -------------------------------------------------------------------------
     // /users/{userId} (Public Role & Display Name)
     // -------------------------------------------------------------------------
@@ -248,6 +273,44 @@ service cloud.firestore {
         );
 
       allow delete: if isDoctor() && isValidId(slotId);
+    }
+
+    // -------------------------------------------------------------------------
+    // /patientDoubts/{doubtId} (Patient Doubts & Doctor Verification)
+    // -------------------------------------------------------------------------
+    match /patientDoubts/{doubtId} {
+      allow get: if isValidId(doubtId) &&
+        isVerifiedUser() &&
+        (existing().patientUid == request.auth.uid || isDoctor());
+
+      allow list: if isVerifiedUser() &&
+        (resource.data.patientUid == request.auth.uid || isDoctor());
+
+      allow create: if isValidId(doubtId) &&
+        isVerifiedUser() &&
+        isValidPatientDoubt(incoming(), doubtId) &&
+        incoming().patientUid == request.auth.uid &&
+        incoming().status == 'pending' &&
+        !('doctorReply' in incoming()) &&
+        !('verifiedBy' in incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isValidId(doubtId) &&
+        isDoctor() &&
+        isValidPatientDoubt(incoming(), doubtId) &&
+        incoming().id == existing().id &&
+        incoming().patientUid == existing().patientUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().status == 'verified' &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'status', 'doctorReply', 'verifiedBy', 'updatedAt'
+        ]);
+
+      allow delete: if isValidId(doubtId) &&
+        isVerifiedUser() &&
+        (existing().patientUid == request.auth.uid || isDoctor());
     }
   }
 }

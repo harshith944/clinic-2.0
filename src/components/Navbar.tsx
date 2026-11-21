@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LogOut, Menu, Stethoscope, User, X } from 'lucide-react';
 import type { ClinicUserProfile } from '../types/clinic';
+import { ClinicLogo } from './ClinicLogo';
 
 interface NavbarProps {
   user: ClinicUserProfile | null;
@@ -14,12 +15,13 @@ export function Navbar({ user, onOpenAuth, onSignOut }: NavbarProps) {
   return (
     <header className="sticky top-0 z-30 bg-white/95 border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
-        {/* Zone 1: Single text element wordmark */}
+        {/* Zone 1: Ajith Clinic Brand Logo */}
         <a
           href="#top"
-          className="font-display text-xl font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0"
+          aria-label="Ajith Clinic home"
+          className="inline-flex items-center whitespace-nowrap shrink-0"
         >
-          CityVet
+          <ClinicLogo />
         </a>
 
         {/* Zone 2: 4 concise single-line nav links */}
@@ -46,10 +48,10 @@ export function Navbar({ user, onOpenAuth, onSignOut }: NavbarProps) {
             {user?.role === 'doctor' ? 'Doctor Schedule' : 'My Visits'}
           </a>
           <a
-            href="#veterinarians"
+            href="#whatsapp-doubts"
             className="hover:text-blue-600 transition-colors whitespace-nowrap shrink-0"
           >
-            Dr. Elena Vance
+            WhatsApp &amp; Doubts
           </a>
         </nav>
 
@@ -125,11 +127,11 @@ export function Navbar({ user, onOpenAuth, onSignOut }: NavbarProps) {
             {user?.role === 'doctor' ? 'Doctor Schedule' : 'My Visits'}
           </a>
           <a
-            href="#veterinarians"
+            href="#whatsapp-doubts"
             onClick={() => setMobileOpen(false)}
             className="py-2 px-2 rounded-lg hover:bg-slate-50"
           >
-            Dr. Elena Vance
+            WhatsApp &amp; Doubts
           </a>
         </nav>
       )}

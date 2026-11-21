@@ -221,6 +221,84 @@
         }
       },
       "required": ["slotId", "doctorId", "date", "time", "appointmentId", "bookedByUid", "status", "updatedAt"]
+    },
+    "PatientDoubt": {
+      "title": "PatientDoubt",
+      "description": "Patient care question verified by Dr. Elena Vance with WhatsApp follow-up support.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 32,
+          "pattern": "^Doubt[0-9]{4,8}$"
+        },
+        "patientUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "patientName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "whatsappPhone": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 32
+        },
+        "petName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "question": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 600
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "verified"]
+        },
+        "doctorReply": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 800
+        },
+        "verifiedBy": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "patientUid",
+        "patientName",
+        "whatsappPhone",
+        "petName",
+        "topic",
+        "question",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -239,6 +317,10 @@
     "/bookedSlots/{slotId}": {
       "schema": { "$ref": "#/entities/BookedSlot" },
       "description": "PII-free slot availability locks for Dr. Elena Vance."
+    },
+    "/patientDoubts/{doubtId}": {
+      "schema": { "$ref": "#/entities/PatientDoubt" },
+      "description": "Patient care questions and doctor-verified clinical answers for Ajith Clinic."
     }
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ShieldCheck, Stethoscope, User, X } from 'lucide-react';
 import { DOCTOR_EMAIL } from '../data/clinicData';
 import type { UserRole } from '../types/clinic';
+import { ClinicLogo } from './ClinicLogo';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -47,12 +48,15 @@ export function AuthModal({
       <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold text-blue-700">
-              CityVet Secure Portal
-            </p>
+            <div className="flex items-center gap-2.5">
+              <ClinicLogo showText={false} size="sm" />
+              <p className="text-xs font-semibold text-blue-700">
+                Ajith Clinic Secure Portal
+              </p>
+            </div>
             <h2
               id="auth-modal-title"
-              className="mt-1 font-display text-2xl font-bold text-slate-900"
+              className="mt-2 font-display text-2xl font-bold text-slate-900"
             >
               Sign In to Your Clinic Account
             </h2>
